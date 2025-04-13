@@ -7,11 +7,12 @@
 #include <cmath>
 
 YtxFile::YtxFile(std::string _path)
-    : buffer{}
+    : buffer{},
+      hasBackup(false),
+      valid(false)
 {
     if (_path.empty())
     {
-        valid = false;
         return;
     }
 
@@ -77,6 +78,8 @@ void YtxFile::load()
     loadPofo();
     loadEntrySections();
     loadEntries();
+
+    backupFile();
 }
 
 void YtxFile::loadHeaderValues()
@@ -176,13 +179,37 @@ void YtxFile::loadEntries()
     }
 }
 
+void YtxFile::backupFile()
+{
+    LOG_F(INFO, "Creating a backup for file: %s", name.c_str());
+
+    std::ofstream out(path + ".backup", std::ios::binary);
+    out.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+    out.close();
+
+    hasBackup = true;
+    LOG_F(INFO, "Backup created at: %s", (path + ".backup").c_str());
+}
+
+void YtxFile::saveFile()
+{
+    LOG_F(INFO, "Saving file: %s", name.c_str());
+    if (!hasBackup)
+    {
+        LOG_F(WARNING, "Saving file without a backup: %s", name.c_str());
+    }
+
+    std::ofstream out(path, std::ios::binary);
+    out.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+    out.close();
+
+    LOG_F(INFO, "File saved at: %s", path.c_str());
+}
+
 void YtxFile::saveChanges()
 {
     reassemble();
-
-    std::ofstream out(path + ".out", std::ios::binary);
-    out.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
-    out.close();
+    saveFile();
 }
 
 void YtxFile::reassemble()

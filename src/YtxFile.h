@@ -51,11 +51,15 @@ private:
     std::string name;
     std::string path;
     bool valid;
+    bool hasBackup;
 
     int pofoAddress{};
     int entrySectionsCount{};
 
     void cleanPath(std::string& _path);
+
+    void backupFile();
+    void saveFile();
 
     void loadPofo();
     void loadHeaderValues();

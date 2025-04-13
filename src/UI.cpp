@@ -8,6 +8,7 @@
 #include <loguru.hpp>
 #include <optional>
 #include <sstream>
+
 #include "UI.h"
 #include "YtxFile.h"
 #include "App;h"
@@ -21,10 +22,10 @@ namespace UI
 
     const int MAX_PATH = 256;
 
+    std::vector<Entry*> displayEntries = {};
     std::vector<std::string> sectionOptions = {"All sections"};
     int selectedSection = 0;
 
-    std::vector<Entry*> displayEntries = {};
 
     SDL_Window* window;
     SDL_Renderer* renderer;
@@ -32,7 +33,7 @@ namespace UI
     std::string stringFilter;
 
     bool isFileOpen = false;
-
+    
     int init()
     {
         if (!SDL_Init(SDL_INIT_VIDEO))
@@ -133,7 +134,6 @@ namespace UI
                 renderSectionSelect();
                 renderTable();
             }
-            
 
             ImGui::End();
             ImGui::Render();
@@ -205,7 +205,6 @@ namespace UI
                     ImGui::TableSetColumnIndex(3);
                     ImGui::Text(address.str().c_str());
                 }
-                
             }
 
             ImGui::EndTable();
