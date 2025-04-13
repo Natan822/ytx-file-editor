@@ -8,6 +8,8 @@
 #include <loguru.hpp>
 #include <optional>
 #include <sstream>
+#include <atomic>
+#include <thread>
 
 #include "UI.h"
 #include "YtxFile.h"
@@ -32,6 +34,7 @@ namespace UI
 
     std::string stringFilter;
 
+    std::atomic<bool> isLoadingFile = false;
     bool isFileOpen = false;
     
     int init()
@@ -103,26 +106,36 @@ namespace UI
                 getFilePath(buffer);
             }
 
-            if (ImGui::Button("Load file"))
+            if (ImGui::Button("Load file") && !isLoadingFile)
             {
                 std::string path(buffer);
 
                 if (isFileOpen)
                 {
                     // Prevent opening a file that's already open file
-                    if(!(App::file->comparePath(path)))
+                    if (!(App::file->comparePath(path)))
                     {
-                        loadFile(path);
+                        isLoadingFile = true;
+
+                        std::thread loadFileThread(loadFile, path);
+                        loadFileThread.detach();
                     }
                 }
                 else
                 {
-                    loadFile(path);
-                    isFileOpen = true;
+                    isLoadingFile = true;
+
+                    std::thread loadFileThread(loadFile, path);
+                    loadFileThread.detach();
                 }
             }
 
-            if (isFileOpen)
+            if (isLoadingFile)
+            {
+                ImGui::Text("Loading file ...");
+            }
+
+            if (isFileOpen && !isLoadingFile)
             {
                 ImGui::SameLine();
                 if (ImGui::Button("Save Changes"))
@@ -331,5 +344,8 @@ namespace UI
         App::file.emplace(path);
         App::file->load();
         updateDisplayEntries();
+
+        isLoadingFile = false;
+        isFileOpen = true;
     }
 }
