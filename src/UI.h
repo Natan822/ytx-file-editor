@@ -15,6 +15,7 @@ namespace UI
     void renderLoop();
     void renderTable();
     void renderSectionSelect();
+    void updateDisplayEntries();
     void getFilePath(char *buffer);
     void loadFile(std::string path);
 }

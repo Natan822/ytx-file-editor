@@ -24,6 +24,8 @@ namespace UI
     std::vector<std::string> sectionOptions = {"All sections"};
     int selectedSection = 0;
 
+    std::vector<Entry*> displayEntries = {};
+
     SDL_Window* window;
     SDL_Renderer* renderer;
 
@@ -169,73 +171,13 @@ namespace UI
             int selectedId = std::stoul(sectionOptions.at(selectedSection), nullptr, 16);
 
             ImGuiListClipper clipper;
-
-            int rows = 0;
-            bool isDisplayAllSections = selectedSection == 0;
-            
-            // Display all sections
-            if (isDisplayAllSections)
-            {
-                for (EntrySection section : App::file->entrySections)
-                {
-                    rows += section.entries.size();
-                }
-            }
-            // A section is selected
-            else
-            {
-                for (EntrySection section : App::file->entrySections)
-                {
-                    if (section.id == selectedId)
-                        rows = section.entriesCount;
-                }
-            }
-
-            if (rows == 0)
-            {
-                LOG_F(ERROR, "Failed to display table: Unable to determine the amount of total rows.");
-                ImGui::EndTable();
-                return;
-            }
-
-            clipper.Begin(rows);
+            clipper.Begin(displayEntries.size());
 
             while (clipper.Step())
             {
                 for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
                 {
-                    EntrySection* currentSection = nullptr;
-                    int entryIndex = row;
-                    for(int i = 0; i < App::file->entrySections.size(); i++)
-                    {
-                        EntrySection *section = &App::file->entrySections[i];
-
-                        if (isDisplayAllSections)
-                        {
-                            if (entryIndex < section->entries.size())
-                            {
-                                currentSection = section;
-                                break;
-                            }
-                            entryIndex -= section->entries.size();
-                        }
-                        else
-                        {
-                            if (selectedId == section->id)
-                            {
-                                currentSection = section;
-                                break;
-                            }
-                        }
-                    }
-                    if (currentSection == nullptr)
-                    {
-                        LOG_F(ERROR, "Failed to display table: Unable to determine the section to be displayed.");
-                        ImGui::EndTable();
-                        return;
-                    }
-                    
-                    Entry* entry = &currentSection->entries.at(entryIndex);
+                    Entry* entry = displayEntries.at(row);
                     ImGui::TableNextRow();
 
                     // Row Index
@@ -302,12 +244,45 @@ namespace UI
                 if (ImGui::Selectable(sectionOptions.at(i).c_str()))
                 {
                     selectedSection = i;
+                    updateDisplayEntries();
                 }
-                
             }
             
             ImGui::EndCombo();
         }
+    }
+
+    void updateDisplayEntries()
+    {
+        displayEntries.clear();
+
+        // All sections
+        if (selectedSection == 0)
+        {
+            for (EntrySection& section : App::file->entrySections)
+            {
+                for (Entry& entry : section.entries)
+                {
+                    displayEntries.push_back(&entry);
+                }
+            }
+        }
+        else
+        {
+            int selectedSectionId = std::stoul(sectionOptions.at(selectedSection), nullptr, 16);
+            for (EntrySection& section : App::file->entrySections)
+            {
+                if (section.id == selectedSectionId)
+                {
+                    for (Entry &entry : section.entries)
+                    {
+                        displayEntries.push_back(&entry);
+                    }
+                    break;
+                }
+            }
+        }
+        
     }
 
     void getFilePath(char *buffer)
@@ -332,5 +307,6 @@ namespace UI
         sectionOptions.resize(1);
         App::file.emplace(path);
         App::file->load();
+        updateDisplayEntries();
     }
 }
