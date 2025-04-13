@@ -1,0 +1,11 @@
+#pragma once
+
+#include "YtxFile.h"
+#include <optional>
+
+namespace App
+{
+    extern std::optional<YtxFile> file;
+
+    void run();
+}
