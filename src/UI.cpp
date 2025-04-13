@@ -16,8 +16,8 @@
 namespace UI
 {
     const char* WINDOW_TITLE = "UD3 String Editor";
-    int WINDOW_WIDTH = 1000;
-    int WINDOW_HEIGHT = 500;
+    int WINDOW_WIDTH = 1150;
+    int WINDOW_HEIGHT = 646;
 
     const int MAX_PATH = 256;
 
@@ -29,7 +29,7 @@ namespace UI
     SDL_Window* window;
     SDL_Renderer* renderer;
 
-    std::string tableFilter;
+    std::string stringFilter;
 
     bool isFileOpen = false;
 
@@ -95,7 +95,7 @@ namespace UI
 
             ImGui::Begin("Hello World!", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
             ImGui::Text("Open a .ytx file:");
-            ImGui::InputText("##", buffer, MAX_PATH);
+            ImGui::InputText("##path", buffer, MAX_PATH);
             ImGui::SameLine();
             if (ImGui::Button("Browse"))
             {
@@ -129,6 +129,7 @@ namespace UI
                     App::file->saveChanges();
                 }
 
+                renderFilterBox();
                 renderSectionSelect();
                 renderTable();
             }
@@ -158,7 +159,7 @@ namespace UI
         if (ImGui::BeginTable("main_table",
                               COLUMNS_COUNT,
                               ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg,
-                              ImVec2(0, WINDOW_HEIGHT * 0.78f)))
+                              ImVec2(0, WINDOW_HEIGHT * 0.75f)))
         {
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
             ImGui::TableSetupColumn(headers[0], ImGuiTableColumnFlags_WidthStretch, 0.2f);
@@ -225,6 +226,7 @@ namespace UI
             return;
         }
 
+        ImGui::Text("Select section:");
         if (ImGui::BeginCombo("##combo", sectionOptions.at(selectedSection).c_str()))
         {
             if (sectionOptions.size() == 1)
@@ -251,6 +253,15 @@ namespace UI
         }
     }
 
+    void renderFilterBox()
+    {
+        ImGui::Text("Filter:");
+        if (ImGui::InputText("##filter", &stringFilter))
+        {
+            updateDisplayEntries();
+        }
+    }
+
     void updateDisplayEntries()
     {
         displayEntries.clear();
@@ -262,7 +273,14 @@ namespace UI
             {
                 for (Entry& entry : section.entries)
                 {
-                    displayEntries.push_back(&entry);
+                    if (stringFilter.size() == 0)
+                    {
+                        displayEntries.push_back(&entry);
+                    }
+                    else if (entry._string.find(stringFilter) != std::string::npos)
+                    {
+                        displayEntries.push_back(&entry);
+                    }
                 }
             }
         }
@@ -275,7 +293,14 @@ namespace UI
                 {
                     for (Entry &entry : section.entries)
                     {
-                        displayEntries.push_back(&entry);
+                        if (stringFilter.size() == 0)
+                        {
+                            displayEntries.push_back(&entry);
+                        }
+                        else if (entry._string.find(stringFilter) != std::string::npos)
+                        {
+                            displayEntries.push_back(&entry);
+                        }
                     }
                     break;
                 }

@@ -12,9 +12,12 @@ namespace UI
     extern SDL_Renderer* renderer;
 
     int init();
+
     void renderLoop();
     void renderTable();
     void renderSectionSelect();
+    void renderFilterBox();
+
     void updateDisplayEntries();
     void getFilePath(char *buffer);
     void loadFile(std::string path);

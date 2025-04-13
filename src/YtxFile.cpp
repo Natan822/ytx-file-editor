@@ -2,7 +2,6 @@
 #include <vector>
 #include <filesystem>
 #include "YtxFile.h"
-#include "ErrorCodes.h"
 #include "Utils.h"
 #include <loguru.hpp>
 #include <cmath>
