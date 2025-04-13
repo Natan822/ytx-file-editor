@@ -16,8 +16,6 @@ YtxFile::YtxFile(std::string _path)
         return;
     }
 
-    // Utils::trim(_path);
-    // Utils::replaceAll(_path, "\\", "/");
     cleanPath(_path);
 
     path = _path;

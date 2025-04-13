@@ -29,6 +29,8 @@ namespace UI
     SDL_Window* window;
     SDL_Renderer* renderer;
 
+    std::string tableFilter;
+
     bool isFileOpen = false;
 
     int init()
@@ -126,10 +128,7 @@ namespace UI
                 {
                     App::file->saveChanges();
                 }
-            }
 
-            if (isFileOpen)
-            {
                 renderSectionSelect();
                 renderTable();
             }
