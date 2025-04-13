@@ -33,9 +33,11 @@ namespace Utils
 
     // Convert a UTF-16 string to UTF-8
     std::string convertUtf16ToUtf8(std::u16string _string);
+    // Convert a UTF-8 string to UTF-16
+    std::u16string convertUtf8ToUtf16(std::string _string);
 
     // Convert a string to bytes as UTF-16 and make its size in bytes divisible by 4(required in .ytx files)
-    std::vector<std::byte> stringToBytes(std::string _string);
+    std::vector<std::byte> stringToBytes(std::u16string _string);
 
     // Write an integer to a buffer in big endian given an offset
     void writeIntToBuffer(std::vector<std::byte> &buffer, unsigned int value, int offset);

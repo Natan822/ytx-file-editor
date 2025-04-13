@@ -116,14 +116,20 @@ namespace Utils
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
         return convert.to_bytes(sourceString);
     }
+
+    std::u16string convertUtf8ToUtf16(std::string sourceString)
+    {
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+        return convert.from_bytes(sourceString);
+    }
     
-    std::vector<std::byte> stringToBytes(std::string _string)
+    std::vector<std::byte> stringToBytes(std::u16string _string)
     {
         std::vector<std::byte> result;
-        for (char _char : _string)
+        for (char16_t _char : _string)
         {
-            result.push_back(std::byte(0));
-            result.push_back(std::byte(_char));
+            result.push_back(std::byte((_char & 0xFF00) >> 8));
+            result.push_back(std::byte(_char & 0x00FF));
         }
         // Null terminator
         result.push_back(std::byte(0));

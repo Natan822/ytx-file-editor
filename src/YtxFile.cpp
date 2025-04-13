@@ -273,16 +273,14 @@ void YtxFile::rewriteEntrySections()
             buffer.insert(buffer.end(), id.begin(), id.end());
             buffer.insert(buffer.end(), stringAddressBytes.begin(), stringAddressBytes.end());
 
-            int stringSize = (entry->_string.size() * 2) + 2;
-
-            if (stringSize % 4 == 0 )
+            int stringSize = getStringSize(entry->_string);
+            if (stringSize % 4 != 0)
             {
-                stringAddress += stringSize;
+                LOG_F(WARNING,
+                      "String size is not divisible by 4: Section index: %d; Entry index: %d; String size: 0x%x",
+                      sectionIndex, entryIndex, stringSize);
             }
-            else
-            {
-                stringAddress += stringSize + 2;
-            }
+            stringAddress += stringSize;
         }
         LOG_F(INFO, "Entry section rewritten: ID = %x; Buffer size = 0x%x", section->id, section->address, buffer.size());
 
@@ -292,7 +290,9 @@ void YtxFile::rewriteEntrySections()
             Entry* entry = &section->entries.at(entryIndex);
             LOG_F(INFO, "Rewriting entry: ID = 0x%x; Address = 0x%x; String = %s", entry->id, entry->stringAddress, entry->_string.c_str());
 
-            std::vector<std::byte> stringBytes = Utils::stringToBytes(entry->_string);
+            std::u16string u16String = Utils::convertUtf8ToUtf16(entry->_string);
+            std::vector<std::byte> stringBytes = Utils::stringToBytes(u16String);
+            
             buffer.insert(buffer.end(), stringBytes.begin(), stringBytes.end());
         }
         LOG_F(INFO, "Strings rewritten from entry section: ID = %x; Buffer size = 0x%x", section->id, buffer.size());
@@ -363,13 +363,7 @@ void YtxFile::rewritePofo()
 
 int YtxFile::getStringSize(std::string _string)
 {
-    int size = _string.size() * 2 + 2;
-    if (size % 4 == 0)
-    {
-        return size;
-    }
-    return size + 2;
-    
+    return Utils::stringToBytes(Utils::convertUtf8ToUtf16(_string)).size();
 }
 
 int YtxFile::getSectionStringsSize(int sectionIndex)
@@ -379,9 +373,13 @@ int YtxFile::getSectionStringsSize(int sectionIndex)
     int sizeStrings = 0;
     for (Entry entry : section.entries)
     {
-
         sizeStrings += getStringSize(entry._string);
     }
 
+    if (sizeStrings % 4 != 0)
+    {
+        LOG_F(WARNING, "Size in bytes of strings not divisible by 4: Section index = %d; Size = 0x%x", sectionIndex, sizeStrings);
+    }
+    
     return sizeStrings;
 }
