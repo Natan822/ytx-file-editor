@@ -43,6 +43,7 @@ namespace UI
     std::atomic<bool> isSavingFile = false;
     std::atomic<bool> isLoadingFile = false;
     bool isFileOpen = false;
+    bool hasFailedToOpen = false;
     
     int init()
     {
@@ -125,6 +126,11 @@ namespace UI
                 ImGui::Text("Saving file ...");
             }
 
+            if (hasFailedToOpen)
+            {
+                ImGui::Text("Failed to open file: Invalid path.");
+            }
+            
             if (isFileOpen && !isLoadingFile && !isSavingFile)
             {
                 ImGui::SameLine();
@@ -376,18 +382,28 @@ namespace UI
     {
         selectedSection = 0;
         sectionOptions.resize(1);
+
         App::file.emplace(path);
         App::file->load();
-        updateDisplayEntries();
 
+        if (App::file->isValid())
+        {
+            updateDisplayEntries();
+            isFileOpen = true;
+            hasFailedToOpen = false;
+        }
+        else
+        {
+            hasFailedToOpen = true;
+        }
         isLoadingFile = false;
-        isFileOpen = true;
     }
 
     void loadFileButton()
     {
         if (filePathBuffer.empty())
         {
+            hasFailedToOpen = true;
             LOG_F(WARNING, "Attempting to load a file without a specified path.");
             return;
         }

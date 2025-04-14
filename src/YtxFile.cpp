@@ -37,6 +37,7 @@ void YtxFile::cleanPath(std::string& _path)
 {
     Utils::trim(_path);
     Utils::replaceAll(_path, "\\", "/");
+    Utils::replaceAll(_path, "\"", "");
 }
 
 bool YtxFile::isValid()
@@ -58,7 +59,9 @@ void YtxFile::load()
 
     if (!file.good())
     {
-        ABORT_F("Failed to open file: %s", path.c_str());
+        LOG_F(ERROR, "Failed to open file: %s", path.c_str());
+        valid = false;
+        return;
     }
 
     LOG_F(INFO, "File loaded: %s", name.c_str());
