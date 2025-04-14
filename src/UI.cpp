@@ -28,11 +28,16 @@ namespace UI
     std::vector<std::string> sectionOptions = {"All sections"};
     int selectedSection = 0;
 
+    std::vector<std::string> filterOptions = {"ID", "String", "Address"};
+    const int ID_FILTER = 0;
+    const int STRING_FILTER = 1;
+    const int ADDRESS_FILTER = 2;
+    int selectedFilter = STRING_FILTER;
 
     SDL_Window* window;
     SDL_Renderer* renderer;
 
-    std::string stringFilter;
+    std::string filterBuffer;
     std::string filePathBuffer;
 
     std::atomic<bool> isSavingFile = false;
@@ -224,7 +229,7 @@ namespace UI
         }
 
         ImGui::Text("Select section:");
-        if (ImGui::BeginCombo("##combo", sectionOptions.at(selectedSection).c_str()))
+        if (ImGui::BeginCombo("##section_combo", sectionOptions.at(selectedSection).c_str()))
         {
             if (sectionOptions.size() == 1)
             {
@@ -252,8 +257,24 @@ namespace UI
 
     void renderFilterBox()
     {
-        ImGui::Text("Filter:");
-        if (ImGui::InputText("##filter", &stringFilter))
+        ImGui::Text("Filter by:");
+        ImGui::SameLine();
+
+        ImGui::SetNextItemWidth(WINDOW_WIDTH * 0.08f);
+        if (ImGui::BeginCombo("##filter_combo", filterOptions.at(selectedFilter).c_str()))
+        {
+            for (int i = 0; i < filterOptions.size(); i++)
+            {
+                if (ImGui::Selectable(filterOptions.at(i).c_str()))
+                {
+                    selectedFilter = i;
+                }
+                
+            }
+            ImGui::EndCombo();
+        }
+        
+        if (ImGui::InputText("##filter", &filterBuffer))
         {
             updateDisplayEntries();
         }
@@ -268,13 +289,9 @@ namespace UI
         {
             for (EntrySection& section : App::file->entrySections)
             {
-                for (Entry& entry : section.entries)
+                for (Entry &entry : section.entries)
                 {
-                    if (stringFilter.size() == 0)
-                    {
-                        displayEntries.push_back(&entry);
-                    }
-                    else if (entry._string.find(stringFilter) != std::string::npos)
+                    if (isEntryDisplayed(entry))
                     {
                         displayEntries.push_back(&entry);
                     }
@@ -290,11 +307,7 @@ namespace UI
                 {
                     for (Entry &entry : section.entries)
                     {
-                        if (stringFilter.size() == 0)
-                        {
-                            displayEntries.push_back(&entry);
-                        }
-                        else if (entry._string.find(stringFilter) != std::string::npos)
+                        if (isEntryDisplayed(entry))
                         {
                             displayEntries.push_back(&entry);
                         }
@@ -304,6 +317,39 @@ namespace UI
             }
         }
         
+    }
+
+    bool isEntryDisplayed(Entry entry)
+    {
+        if (filterBuffer.size() == 0)
+        {
+            return true;
+        }
+
+        size_t filterString = std::string::npos;
+        switch (selectedFilter)
+        {
+        case ID_FILTER:
+        {
+            std::stringstream compareString;
+            compareString << std::hex << entry.id;
+            filterString = compareString.str().find(filterBuffer);
+            break;
+        }
+        case STRING_FILTER:
+            filterString = entry._string.find(filterBuffer);
+            break;
+
+        case ADDRESS_FILTER:
+        {
+            std::stringstream compareString;
+            compareString << std::hex << entry.stringAddress;
+            filterString = compareString.str().find(filterBuffer);
+            break;
+        }
+        }
+
+        return filterString != std::string::npos;
     }
 
     void getFilePath(std::string& buffer)

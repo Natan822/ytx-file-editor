@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL3/SDL.h>
+#include "YtxFile.h"
 
 namespace UI
 {
@@ -26,4 +27,6 @@ namespace UI
 
     void loadFileButton();
     void saveFileButton();
+
+    bool isEntryDisplayed(Entry entry);
 }
