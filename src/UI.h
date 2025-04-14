@@ -20,7 +20,10 @@ namespace UI
 
     void updateDisplayEntries();
     void getFilePath(std::string& buffer);
+
     void loadFile(std::string path);
+    void saveFile();
 
     void loadFileButton();
+    void saveFileButton();
 }

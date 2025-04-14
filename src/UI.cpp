@@ -35,7 +35,7 @@ namespace UI
     std::string stringFilter;
     std::string filePathBuffer;
 
-
+    std::atomic<bool> isSavingFile = false;
     std::atomic<bool> isLoadingFile = false;
     bool isFileOpen = false;
     
@@ -75,8 +75,6 @@ namespace UI
     void renderLoop()
     {
         bool quit = false;
-
-        nfdu8char_t *outPath = "##";
         while (!quit)
         {
             SDL_Event event;
@@ -117,12 +115,17 @@ namespace UI
                 ImGui::Text("Loading file ...");
             }
 
-            if (isFileOpen && !isLoadingFile)
+            if (isSavingFile)
+            {
+                ImGui::Text("Saving file ...");
+            }
+
+            if (isFileOpen && !isLoadingFile && !isSavingFile)
             {
                 ImGui::SameLine();
                 if (ImGui::Button("Save Changes"))
                 {
-                    App::file->saveChanges();
+                    saveFileButton();
                 }
 
                 renderFilterBox();
@@ -316,7 +319,7 @@ namespace UI
         nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
 
         NFD_Quit();
-        
+
         if (result == NFD_OKAY)
         {
             buffer = outPath;
@@ -360,5 +363,19 @@ namespace UI
 
         std::thread loadFileThread(loadFile, filePathBuffer);
         loadFileThread.detach();
+    }
+
+    void saveFile()
+    {
+        App::file->saveChanges();
+        isSavingFile = false;
+    }
+
+    void saveFileButton()
+    {
+        isSavingFile = true;
+
+        std::thread saveFileThread(saveFile);
+        saveFileThread.detach();
     }
 }
