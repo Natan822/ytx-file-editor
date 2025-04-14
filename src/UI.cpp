@@ -33,6 +33,8 @@ namespace UI
     SDL_Renderer* renderer;
 
     std::string stringFilter;
+    std::string filePathBuffer;
+
 
     std::atomic<bool> isLoadingFile = false;
     bool isFileOpen = false;
@@ -75,7 +77,6 @@ namespace UI
         bool quit = false;
 
         nfdu8char_t *outPath = "##";
-        char buffer[MAX_PATH] = {0};
         while (!quit)
         {
             SDL_Event event;
@@ -99,35 +100,16 @@ namespace UI
 
             ImGui::Begin("Hello World!", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
             ImGui::Text("Open a .ytx file:");
-            ImGui::InputText("##path", buffer, MAX_PATH);
+            ImGui::InputText("##path", &filePathBuffer);
             ImGui::SameLine();
             if (ImGui::Button("Browse"))
             {
-                getFilePath(buffer);
+                getFilePath(filePathBuffer);
             }
 
             if (ImGui::Button("Load file") && !isLoadingFile)
             {
-                std::string path(buffer);
-
-                if (isFileOpen)
-                {
-                    // Prevent opening a file that's already open file
-                    if (!(App::file->comparePath(path)))
-                    {
-                        isLoadingFile = true;
-
-                        std::thread loadFileThread(loadFile, path);
-                        loadFileThread.detach();
-                    }
-                }
-                else
-                {
-                    isLoadingFile = true;
-
-                    std::thread loadFileThread(loadFile, path);
-                    loadFileThread.detach();
-                }
+                loadFileButton();
             }
 
             if (isLoadingFile)
@@ -321,7 +303,7 @@ namespace UI
         
     }
 
-    void getFilePath(char *buffer)
+    void getFilePath(std::string& buffer)
     {
         NFD_Init();
 
@@ -334,7 +316,7 @@ namespace UI
         nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
 
         NFD_Quit();
-        strcpy(buffer, outPath);
+        buffer = outPath;
     }
 
     void loadFile(std::string path)
@@ -347,5 +329,32 @@ namespace UI
 
         isLoadingFile = false;
         isFileOpen = true;
+    }
+
+    void loadFileButton()
+    {
+        if (filePathBuffer.empty())
+        {
+            LOG_F(WARNING, "Attempting to load a file without a specified path.");
+            return;
+        }
+
+        if (isFileOpen)
+        {
+            // Prevent opening a file that's already open file
+            if (!(App::file->comparePath(filePathBuffer)))
+            {
+                isLoadingFile = true;
+
+                std::thread loadFileThread(loadFile, filePathBuffer);
+                loadFileThread.detach();
+            }
+            return;
+        }
+        
+        isLoadingFile = true;
+
+        std::thread loadFileThread(loadFile, filePathBuffer);
+        loadFileThread.detach();
     }
 }

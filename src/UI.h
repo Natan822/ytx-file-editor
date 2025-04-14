@@ -19,6 +19,8 @@ namespace UI
     void renderFilterBox();
 
     void updateDisplayEntries();
-    void getFilePath(char *buffer);
+    void getFilePath(std::string& buffer);
     void loadFile(std::string path);
+
+    void loadFileButton();
 }
