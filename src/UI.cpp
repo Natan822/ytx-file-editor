@@ -316,7 +316,11 @@ namespace UI
         nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
 
         NFD_Quit();
-        buffer = outPath;
+        
+        if (result == NFD_OKAY)
+        {
+            buffer = outPath;
+        }
     }
 
     void loadFile(std::string path)
@@ -351,7 +355,7 @@ namespace UI
             }
             return;
         }
-        
+
         isLoadingFile = true;
 
         std::thread loadFileThread(loadFile, filePathBuffer);
