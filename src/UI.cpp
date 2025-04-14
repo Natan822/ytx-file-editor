@@ -18,7 +18,7 @@
 
 namespace UI
 {
-    const char* WINDOW_TITLE = "UD3 String Editor";
+    std::string WINDOW_TITLE = "YTX File Editor";
     int WINDOW_WIDTH = 1150;
     int WINDOW_HEIGHT = 646;
 
@@ -46,7 +46,7 @@ namespace UI
             ABORT_F("Error: SDL_Init(): %s", SDL_GetError());
         }
 
-        window = SDL_CreateWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+        window = SDL_CreateWindow(WINDOW_TITLE.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
         if (!window)
         {
             ABORT_F("Error: SDL_CreateWindow(): %s", SDL_GetError());
@@ -96,7 +96,7 @@ namespace UI
             ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT));
             ImGui::SetNextWindowPos(ImVec2(0, 0));
 
-            ImGui::Begin("Hello World!", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+            ImGui::Begin(WINDOW_TITLE.c_str(), 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
             ImGui::Text("Open a .ytx file:");
             ImGui::InputText("##path", &filePathBuffer);
             ImGui::SameLine();

@@ -3,7 +3,7 @@
 
 namespace UI
 {
-    extern const char* WINDOW_TITLE;
+    extern std::string WINDOW_TITLE;
     extern int WINDOW_WIDTH;
     extern int WINDOW_HEIGHT;
     extern const int MAX_PATH;
