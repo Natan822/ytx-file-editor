@@ -49,12 +49,17 @@ namespace UI
     {
         namespace Message
         {
+            std::string title;
             std::string message;
 
-            void newPopUp(std::string _message)
+            void newPopUp(std::string _title, std::string _message)
             {
+                if (!_title.empty())
+                {
+                    title = _title;
+                }
                 message = _message;
-                ImGui::OpenPopup("##message_popup");
+                ImGui::OpenPopup(title.c_str());
             }
         };
 
@@ -166,6 +171,12 @@ namespace UI
                 loadFileButton();
             }
 
+            if (hasFailedToOpen)
+            {
+                PopUp::Message::newPopUp("Error", "Failed to open file: Invalid path.");
+                hasFailedToOpen = false;
+            }
+            
             if (isLoadingFile)
             {
                 ImGui::Text("Loading file ...");
@@ -176,11 +187,6 @@ namespace UI
                 ImGui::Text("Saving file ...");
             }
 
-            if (hasFailedToOpen)
-            {
-                ImGui::Text("Failed to open file: Invalid path.");
-            }
-            
             if (isFileOpen && !isLoadingFile && !isSavingFile)
             {
                 ImGui::SameLine();
@@ -188,14 +194,16 @@ namespace UI
                 {
                     saveFileButton();
                 }
+
+                renderFilterBox();
+                renderSectionSelect();
+
                 ImGui::SameLine();
-                if (ImGui::Button("Add entry"))
+                if (ImGui::Button("Add Entry"))
                 {
                     ImGui::OpenPopup("Add a new entry");
                 }
 
-                renderFilterBox();
-                renderSectionSelect();
                 renderTable();
             }
 
@@ -290,6 +298,7 @@ namespace UI
         }
 
         ImGui::Text("Select section:");
+        ImGui::SetNextItemWidth(WINDOW_WIDTH * 0.1f);
         if (ImGui::BeginCombo("##section_combo", sectionOptions.at(selectedSection).c_str()))
         {
             if (sectionOptions.size() == 1)
@@ -504,11 +513,11 @@ namespace UI
         {
             updateDisplayEntries();
             isFileOpen = true;
-            hasFailedToOpen = false;
         }
         else
         {
             hasFailedToOpen = true;
+            isFileOpen = false;
         }
         isLoadingFile = false;
     }
@@ -518,6 +527,7 @@ namespace UI
         if (filePathBuffer.empty())
         {
             hasFailedToOpen = true;
+
             LOG_F(WARNING, "Attempting to load a file without a specified path.");
             return;
         }
@@ -591,12 +601,13 @@ namespace UI
 
     void renderMessagePopUp()
     {
-        if (ImGui::BeginPopupModal("##message_popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal(PopUp::Message::title.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text(PopUp::Message::message.c_str());
             if (ImGui::Button("OK"))
             {
                 ImGui::CloseCurrentPopup();
+                PopUp::Message::title = "##message_popup";
             }
             ImGui::EndPopup();
         }
