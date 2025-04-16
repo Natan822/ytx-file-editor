@@ -44,7 +44,54 @@ namespace UI
     std::atomic<bool> isLoadingFile = false;
     bool isFileOpen = false;
     bool hasFailedToOpen = false;
-    
+
+    namespace PopUp
+    {
+        namespace Message
+        {
+            std::string message;
+
+            void newPopUp(std::string _message)
+            {
+                message = _message;
+                ImGui::OpenPopup("##message_popup");
+            }
+        };
+
+        namespace AddEntry
+        {
+            int selectedSection = 1;
+            std::string stringBuffer;
+            std::string entryIdBuffer;
+
+            bool displayError = false;
+            std::string errorMessage;
+
+            void renderErrorMessage()
+            {
+                if (!errorMessage.empty())
+                {
+                    ImGui::TextColored(ImVec4(1, 0, 0, 1), errorMessage.c_str());
+                }
+            }
+
+            void addError(std::string message)
+            {
+                displayError = true;
+                errorMessage = "Error: " + message;
+            }
+
+            void reset()
+            {
+                selectedSection = 1;
+                stringBuffer.clear();
+                entryIdBuffer.clear();
+                displayError = false;
+                errorMessage.clear();
+            }
+        }
+    };
+
     int init()
     {
         if (!SDL_Init(SDL_INIT_VIDEO))
@@ -111,6 +158,9 @@ namespace UI
                 getFilePath(filePathBuffer);
             }
 
+            renderPopUpAddEntry();
+            renderMessagePopUp();
+
             if (ImGui::Button("Load file") && !isLoadingFile)
             {
                 loadFileButton();
@@ -137,6 +187,11 @@ namespace UI
                 if (ImGui::Button("Save Changes"))
                 {
                     saveFileButton();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Add entry"))
+                {
+                    ImGui::OpenPopup("Add a new entry");
                 }
 
                 renderFilterBox();
@@ -239,13 +294,7 @@ namespace UI
         {
             if (sectionOptions.size() == 1)
             {
-                for (EntrySection section : App::file->entrySections)
-                {
-                    std::stringstream sstream;
-                    sstream << std::hex << section.id;
-                    
-                    sectionOptions.push_back(std::string(sstream.str()));
-                }
+                fillSectionOptions();
             }
             
             for (int i = 0; i < sectionOptions.size(); i++)
@@ -284,6 +333,71 @@ namespace UI
         {
             updateDisplayEntries();
         }
+    }
+
+    void renderPopUpAddEntry()
+    {
+        if (!ImGui::BeginPopupModal("Add a new entry", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            return;
+        }
+
+        ImGui::Text("String:");
+        ImGui::InputText("##string_popup", &PopUp::AddEntry::stringBuffer);
+
+        if (sectionOptions.size() == 1)
+        {
+            fillSectionOptions();
+        }
+
+        ImGui::Text("Entry ID:");
+        if (ImGui::InputText("##entry_id_popup", &PopUp::AddEntry::entryIdBuffer, ImGuiInputTextFlags_CharsHexadecimal))
+        {
+            // Prevent ID from being over 4 bytes
+            PopUp::AddEntry::entryIdBuffer.resize(8);
+        }
+
+        ImGui::Text("Section:");
+        if (ImGui::BeginCombo("##section_popup", sectionOptions.at(PopUp::AddEntry::selectedSection).c_str()))
+        {
+            for (int i = 1; i < sectionOptions.size(); i++)
+            {
+                if (ImGui::Selectable(sectionOptions.at(i).c_str()))
+                {
+                    PopUp::AddEntry::selectedSection = i;
+                }
+            }
+
+            ImGui::EndCombo();
+        }
+        PopUp::AddEntry::renderErrorMessage();
+        
+        if (ImGui::Button("Add"))
+        {
+            if (PopUp::AddEntry::entryIdBuffer.empty() || PopUp::AddEntry::stringBuffer.empty())
+            {
+                PopUp::AddEntry::addError("All fields must be filled.");
+            }
+            else
+            {
+                int entryId = std::stoul(PopUp::AddEntry::entryIdBuffer, nullptr, 16);
+                int sectionId = std::stoul(sectionOptions.at(PopUp::AddEntry::selectedSection), nullptr, 16);
+
+                if (addEntryButton(PopUp::AddEntry::stringBuffer, entryId, sectionId))
+                {
+                    PopUp::AddEntry::reset();
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            PopUp::AddEntry::reset();
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
     }
 
     void updateDisplayEntries()
@@ -439,5 +553,52 @@ namespace UI
 
         std::thread saveFileThread(saveFile);
         saveFileThread.detach();
+    }
+
+    bool addEntryButton(std::string _string, int entryId, int sectionId)
+    {
+        int result = App::file->addEntry(_string, entryId, sectionId);
+        if (result == 0)
+        {
+            return true;
+        }
+
+        switch (result)
+        {
+        case YtxFile::INVALID_SECTION_ID:
+            PopUp::AddEntry::addError("Invalid Section ID.");
+            break;
+
+        case YtxFile::ENTRY_ID_TAKEN:
+            PopUp::AddEntry::addError("Entry ID is already taken.");
+            break;
+        }
+
+        return false;
+        
+    }
+
+    void fillSectionOptions()
+    {
+        for (EntrySection section : App::file->entrySections)
+        {
+            std::stringstream sstream;
+            sstream << std::hex << section.id;
+
+            sectionOptions.push_back(std::string(sstream.str()));
+        }
+    }
+
+    void renderMessagePopUp()
+    {
+        if (ImGui::BeginPopupModal("##message_popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text(PopUp::Message::message.c_str());
+            if (ImGui::Button("OK"))
+            {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
     }
 }

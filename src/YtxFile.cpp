@@ -386,3 +386,52 @@ int YtxFile::getSectionStringsSize(int sectionIndex)
     
     return sizeStrings;
 }
+
+int YtxFile::addEntry(std::string _string, int entryId, int sectionId)
+{
+    LOG_F(INFO, "Adding new entry: String: %s; ID: %x; Entry Section ID: %x", _string.c_str(), entryId, sectionId);
+
+    EntrySection* targetEntry = findSection(sectionId);
+    if (targetEntry == nullptr)
+    {
+        LOG_F(ERROR, "Failed to add new entry: Invalid section ID.");
+        return INVALID_SECTION_ID;
+    }
+
+    if (entryIdExists(entryId, *targetEntry))
+    {
+        LOG_F(ERROR, "Failed to add new entry: Entry ID %x already exists in Section %x.", entryId, sectionId);
+        return ENTRY_ID_TAKEN;
+    }
+
+    Entry entry = {entryId, 0, _string};
+    targetEntry->entries.push_back(entry);
+    targetEntry->entriesCount++;
+
+    LOG_F(INFO, "New entry added: String: %s; ID: %x; Entry Section ID: %x", _string.c_str(), entryId, sectionId);
+    return 0;
+}
+
+EntrySection* YtxFile::findSection(int id)
+{
+    for (EntrySection& section : entrySections)
+    {
+        if (section.id == id)
+        {
+            return &section;
+        }
+    }
+    return nullptr;
+}
+
+bool YtxFile::entryIdExists(int entryId, EntrySection section)
+{
+    for (Entry entry : section.entries)
+    {
+        if (entry.id == entryId)
+        {
+            return true;
+        }
+    }
+    return false;
+}

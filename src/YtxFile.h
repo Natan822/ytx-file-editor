@@ -20,7 +20,6 @@ struct EntrySection
 
 class YtxFile
 {
-
 // Size of an entry in bytes
 const int ENTRY_SIZE = 8;
 // Size of an entry section info in bytes(EntrySection struct)
@@ -35,6 +34,11 @@ enum class Offset
 };
 
 public:
+
+    // Error codes
+    const static int INVALID_SECTION_ID = 1;
+    const static int ENTRY_ID_TAKEN = 2;
+
     std::vector<std::byte> buffer;
     std::vector<std::byte> pofo;
     std::vector<EntrySection> entrySections;
@@ -46,6 +50,8 @@ public:
     bool isValid();
     void load();
     void saveChanges();
+
+    int addEntry(std::string _string, int entryId, int sectionId);
 
 private:
     std::string name;
@@ -76,4 +82,7 @@ private:
     void rewriteEntrySectionsInfo();
     void rewriteEntrySections();
     void rewritePofo();
+
+    EntrySection* findSection(int id);
+    bool entryIdExists(int entryId, EntrySection section);
 };
