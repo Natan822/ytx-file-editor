@@ -412,6 +412,33 @@ int YtxFile::addEntry(std::string _string, int entryId, int sectionId)
     return 0;
 }
 
+int YtxFile::removeEntry(int entryId, int sectionId)
+{
+    LOG_F(INFO, "Removing entry: ID: %x; Entry Section ID: %x", entryId, sectionId);
+
+    EntrySection* targetEntry = findSection(sectionId);
+    if (targetEntry == nullptr)
+    {
+        LOG_F(ERROR, "Failed to remove entry: Invalid section ID.");
+        return INVALID_SECTION_ID;
+    }
+
+    for (int i = 0; i < targetEntry->entries.size(); i++)
+    {
+        if (targetEntry->entries.at(i).id == entryId)
+        {
+            targetEntry->entries.erase(targetEntry->entries.begin() + i);
+            targetEntry->entriesCount--;
+
+            LOG_F(INFO, "Entry removed: ID: %x; Entry Section ID: %x", entryId, sectionId);
+            return 0;
+        }
+    }
+
+    LOG_F(ERROR, "Failed to remove entry: Entry ID %x not found: Section ID: %x.", entryId, sectionId);
+    return INVALID_ENTRY_ID;
+}
+
 EntrySection* YtxFile::findSection(int id)
 {
     for (EntrySection& section : entrySections)

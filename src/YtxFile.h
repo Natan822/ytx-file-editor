@@ -38,6 +38,7 @@ public:
     // Error codes
     const static int INVALID_SECTION_ID = 1;
     const static int ENTRY_ID_TAKEN = 2;
+    const static int INVALID_ENTRY_ID = 3;
 
     std::vector<std::byte> buffer;
     std::vector<std::byte> pofo;
@@ -52,6 +53,7 @@ public:
     void saveChanges();
 
     int addEntry(std::string _string, int entryId, int sectionId);
+    int removeEntry(int entryId, int sectionId);
 
 private:
     std::string name;
